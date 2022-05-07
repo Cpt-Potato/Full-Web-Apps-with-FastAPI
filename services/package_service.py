@@ -1,12 +1,17 @@
 from datetime import datetime
 from typing import Optional
 
+from data import db_session
 from data.package import Package
 from data.release import Release
 
 
 def release_count() -> int:
-    return 2_234_847
+    session = db_session.create_session()
+    try:
+        return session.query(Release).count()
+    finally:
+        session.close()
 
 
 def package_count() -> int:

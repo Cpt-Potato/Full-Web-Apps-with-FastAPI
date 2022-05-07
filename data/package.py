@@ -1,21 +1,34 @@
-class Package:
-    def __init__(
-        self,
-        package_name: str,
-        summary: str,
-        description: str,
-        home_page: str,
-        lic: str,
-        author_name: str,
-        maintainers: list = None,
-    ):
-        if maintainers is None:
-            maintainers = []
-        self.maintainers = maintainers
-        self.package_name = package_name
-        self.id = package_name
-        self.summary = summary
-        self.description = description
-        self.home_page = home_page
-        self.license = lic
-        self.author_name = author_name
+from datetime import datetime
+
+from sqlalchemy import Column, DateTime, Integer, String, orm
+
+from data.modelbase import SqlAlchemyBase
+from data.release import Release
+
+
+class Package(SqlAlchemyBase):
+    __tablename__ = "packages"
+
+    id: str = Column(String, primary_key=True)
+    created_date: datetime = Column(DateTime, default=datetime.now, index=True)
+    last_updated: datetime = Column(DateTime, default=datetime.now, index=True)
+    summary: str = Column(String, nullable=False)
+    description: str = Column(String, nullable=False)
+
+    home_page: str = Column(String)
+    docs_url: str = Column(String)
+    package_url: str = Column(String)
+
+    author_name: str = Column(String)
+    author_email: str = Column(String)
+
+    license: str = Column(String)
+
+    releases: list[Release] = orm.relation("Release", order_by=[
+        Release.major_ver.desc(),
+        Release.minor_ver.desc(),
+        Release.build_ver.desc()
+    ], back_populates="package")
+
+    def __repr__(self):
+        return f"<Package {self.id}>"

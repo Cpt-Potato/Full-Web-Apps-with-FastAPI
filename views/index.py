@@ -9,7 +9,7 @@ router = APIRouter()
 
 
 @router.get("/")
-@template()  # (template_file="home/index.pt")
+@template()
 def index(request: Request):
     vm = IndexViewModel(request)
     return vm.to_dict()
