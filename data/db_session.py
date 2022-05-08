@@ -33,8 +33,8 @@ def global_init():  # db_file: str):
 
 def create_session() -> Session:
     with Session(engine) as session:
+        session.expire_on_commit = False
         return session
 
     # session: Session = __factory()
-    # session.expire_on_commit = False
     # return session
