@@ -1,49 +1,19 @@
-# from pathlib import Path
-
-import uvicorn
-from fastapi import FastAPI
 import fastapi_chameleon
+from fastapi import FastAPI
 from starlette.staticfiles import StaticFiles
 
 from data import db_session
-from views import index, account, packages
+from views import account, index, packages
 
 app = FastAPI()
 
-
-def main():
-    configure(dev_mode=True)
-    uvicorn.run(app, host='127.0.0.1', port=8000, debug=True)
-
-
-def configure(dev_mode: bool = False):
-    configure_templates(dev_mode)
-    configure_routes()
-    configure_db()
+fastapi_chameleon.global_init("templates")
+app.mount("/static", StaticFiles(directory="static"), name="static")
+app.include_router(index.router)
+app.include_router(account.router)
+app.include_router(packages.router)
 
 
-def configure_db():
-    # file = (Path(__file__).parent / "db" / "pypi.sqlite").absolute()
-    db_session.global_init()  # file.as_posix())
-
-
-def configure_templates(dev_mode: bool):
-    fastapi_chameleon.global_init("templates", auto_reload=dev_mode)
-
-
-def configure_routes():
-    app.mount("/static", StaticFiles(directory="static"), name="static")
-    app.include_router(index.router)
-    app.include_router(account.router)
-    app.include_router(packages.router)
-
-
-# @app.on_event("startup")
-# def on_startup():
-#     configure()
-
-
-if __name__ == "__main__":
-    main()
-else:
-    configure(dev_mode=False)
+@app.on_event("startup")
+async def on_startup():
+    await db_session.global_init()

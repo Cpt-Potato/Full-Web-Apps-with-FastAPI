@@ -10,8 +10,10 @@ router = APIRouter()
 
 @router.get("/")
 @template()
-def index(request: Request):
+async def index(request: Request):
     vm = IndexViewModel(request)
+    await vm.load()
+
     return vm.to_dict()
 
 

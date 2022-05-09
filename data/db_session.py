@@ -1,34 +1,27 @@
 from pathlib import Path
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import Session, sessionmaker
 
 from data.modelbase import SqlAlchemyBase
 
-# __factory: Optional[Callable[[], Session]] = None
 db_file = (Path() / "db" / "pypi.sqlite").as_posix()
-conn_str = "sqlite:///" + db_file.strip()
+conn_str = "sqlite:///" + db_file
+async_conn_str = "sqlite+aiosqlite:///" + db_file
+
 engine = create_engine(
-    conn_str, echo=False, connect_args={"check_same_thread": False}
+    conn_str, echo=True, connect_args={"check_same_thread": False}
+)
+async_engine = create_async_engine(
+    async_conn_str, echo=True, connect_args={"check_same_thread": False},
+    future=True
 )
 
 
-def global_init():  # db_file: str):
-    SqlAlchemyBase.metadata.create_all(engine)
-    # global __factory
-    #
-    # conn_str = "sqlite:///" + db_file.strip()
-    # print(f"Connecting to DB with {conn_str}")
-    #
-    # engine = create_engine(
-    #     conn_str, echo=False, connect_args={"check_same_thread": False}
-    # )
-    # __factory = sessionmaker(bind=engine)
-    #
-    # # noinspection TaskProblemsInspection
-    # import data.__all_models
-    #
-    # SqlAlchemyBase.metadata.create_all(engine)
+async def global_init():
+    async with async_engine.begin() as conn:
+        await conn.run_sync(SqlAlchemyBase.metadata.create_all)
 
 
 def create_session() -> Session:
@@ -36,5 +29,9 @@ def create_session() -> Session:
         session.expire_on_commit = False
         return session
 
-    # session: Session = __factory()
-    # return session
+
+def create_async_session() -> AsyncSession:
+    async_session = sessionmaker(
+        async_engine, expire_on_commit=False, class_=AsyncSession
+    )
+    return async_session()
